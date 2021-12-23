@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 # sources for the library are added in the subdirectories
 add_library(imk STATIC)
-add_subdirectory(visualization)
+
+target_sources(imk PRIVATE
+    gl.cpp
+)
 
 target_link_libraries(imk
     glad

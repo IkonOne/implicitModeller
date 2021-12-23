@@ -8,84 +8,61 @@
 #include <glm/ext.hpp>
 
 static const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "uniform mat4 mvp;\n"
+    "layout (location = 0) in vec3 a_position;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0) * mvp;\n"
+    "   gl_Position = vec4(a_position.x, a_position.y, a_position.z, 1.0);\n"
     "}\0";
 
 static const char* fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
+    "uniform mat4 u_mvp;\n"
+    "uniform vec2 u_resolution;\n"
     "void main()\n"
     "{\n"
-    "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "   vec2 st = gl_FragCoord.xy/u_resolution;\n"
+    "   gl_FragColor = vec4(st.x, st.y, 0.0, 1.0);\n"
     "}\n";
 
 int main(void) {
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location;
+    auto window = imk::gl::createWindow(800, 600, "Minimal Example...");
 
-    imk::GLKernel kernel;
-    kernel.create(800, 600, "Minimal Example...");
+    auto vertexShader = imk::gl::compileShader(GL_VERTEX_SHADER, vertexShaderSource);
+    auto fragmentShader = imk::gl::compileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
+    auto shaderProgram = imk::gl::createProgram({
+        vertexShader, fragmentShader
+    });
+    imk::gl::deleteShader(vertexShader);
+    imk::gl::deleteShader(fragmentShader);
 
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // link shaders
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    GLint mvp_location, resolution_location;
+    mvp_location = glGetUniformLocation(shaderProgram, "u_mvp");
+    resolution_location = glGetUniformLocation(shaderProgram, "u_resolution");
 
-    mvp_location = glGetUniformLocation(shaderProgram, "mvp");
 
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left  
-         0.5f, -0.5f, 0.0f, // right 
-         0.0f,  0.5f, 0.0f  // top   
+         1.0f,  1.0f, 0.0f,  // top right
+         1.0f, -1.0f, 0.0f,  // bottom right
+        -1.0f, -1.0f, 0.0f,  // bottom left
+        -1.0f,  1.0f, 0.0f   // top left 
+    };
+    unsigned int indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
     }; 
 
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (GLvoid*)0);
     glEnableVertexAttribArray(0);
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
@@ -95,23 +72,28 @@ int main(void) {
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
 
-    while (!kernel.shouldClose()) {
-        kernel.begin();
+    while (!imk::gl::windowShouldClose(window)) {
+        imk::gl::beginRendering(window);
+        {
+            float time = glfwGetTime() * 0.1f;
+            glm::mat4 m = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
+            glm::mat4 p = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+            glm::mat4 mvp = m * p;
 
-        float time = glfwGetTime() * 0.1f;
-        glm::mat4 m = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::mat4 p = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
-        glm::mat4 mvp = m * p;
+            glm::ivec2 dims;
+            glfwGetFramebufferSize(window, &dims.x, &dims.y);
 
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        kernel.end();
+            glUseProgram(shaderProgram);
+            glBindVertexArray(VAO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
+            glUniform2f(resolution_location, dims.x, dims.y);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
+        imk::gl::endRendering(window);
     }
 
-    kernel.terminate();
+    imk::gl::destroyWindow(window);
 
     return 0;
 }
