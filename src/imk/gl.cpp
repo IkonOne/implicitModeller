@@ -63,8 +63,8 @@ void endRendering(GLFWwindow* window) {
     glfwPollEvents();
 }
 
-const GLShaderID compileShader(const GLuint type, const char* source) {
-    GLShaderID shaderID = 0;
+const GLuint compileShader(const GLuint type, const char* source) {
+    GLuint shaderID = 0;
 
     shaderID = glCreateShader(type);
     if (shaderID == GL_NONE) {
@@ -88,13 +88,13 @@ const GLShaderID compileShader(const GLuint type, const char* source) {
     return shaderID;
 }
 
-const void deleteShader(const GLShaderID shaderID) {
+const void deleteShader(const GLuint shaderID) {
     glDeleteShader(shaderID);
 }
 
-const GLProgramID createProgram(const std::vector<GLShaderID>& shaderIDs) {
+const GLuint createProgram(const std::vector<GLuint>& shaderIDs) {
     int success;
-    GLProgramID programID;
+    GLuint programID;
 
     programID = glCreateProgram();
     if (programID == GL_NONE) {
