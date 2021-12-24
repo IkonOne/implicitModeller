@@ -26,7 +26,7 @@ public:
     }
 
 private:
-    void _buildShaderProgram();
+    GLint _buildShaderProgram();
 
     std::string _fragSource;
     std::string _vertSource;

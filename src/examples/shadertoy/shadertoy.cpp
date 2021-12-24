@@ -24,15 +24,23 @@ int main(int argc, char* argv[]) {
     if (argc > 1) {
         fileShader.start(argv[1]);
         auto fragShaderSource = loadTextFile(fileShader.path().c_str());
+        std::cout << "Loading shader : " << argv[1] << '\n';
         psView.hotReload(fragShaderSource.c_str());
+        std::cout << "loaded...\n";
     }
 
     while (!glfwWindowShouldClose(window)) {
         if (fileShader.isWatching() && fileShader.checkModified()) {
             auto fragShaderSource = loadTextFile(fileShader.path().c_str());
-            psView.hotReload(fragShaderSource.c_str());
 
-            std::cout << "Reloaded shader...\n";
+            try {
+                std::cout << "Reloading shader : " << fileShader.path() << '\n';
+                psView.hotReload(fragShaderSource.c_str());
+            }
+            catch (const std::runtime_error& e) {
+                std::cout << "Failed to reload shader...\n";
+                std::cout << e.what() << '\n';
+            }
         }
 
         imk::gl::beginRendering(window);

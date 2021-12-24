@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
+#include <iostream>
+
 static const char* vertSource = "#version 330 core\n"
     "layout (location = 0) in vec3 a_position;\n"
     "void main()\n"
@@ -73,18 +75,24 @@ void PixelShaderView::draw() const {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
-void PixelShaderView::_buildShaderProgram() {
+GLint PixelShaderView::_buildShaderProgram() {
+    GLint program;
+
     auto vertShader = imk::gl::compileShader(GL_VERTEX_SHADER, this->_vertSource.c_str());
     auto fragShader = imk::gl::compileShader(GL_FRAGMENT_SHADER, this->_fragSource.c_str());
-    this->_program = imk::gl::createProgram({vertShader, fragShader});
+    program = imk::gl::createProgram({vertShader, fragShader});
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
 
-    this->_u_resolution = glGetUniformLocation(this->_program, "u_resolution");
+    this->_u_resolution = glGetUniformLocation(program, "u_resolution");
+
+    return program;
 }
 
 void PixelShaderView::hotReload(const char* fragSource) {
     this->_fragSource = fragSource;
+    auto program = this->_buildShaderProgram();
+
     glDeleteProgram(this->_program);
-    this->_buildShaderProgram();
+    this->_program = program;
 }
