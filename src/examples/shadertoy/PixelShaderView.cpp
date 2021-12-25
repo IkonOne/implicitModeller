@@ -37,7 +37,9 @@ static unsigned int indices[] = {
     1, 2, 3
 }; 
 
-PixelShaderView::PixelShaderView() {
+PixelShaderView::PixelShaderView()
+    : _mvp(glm::mat4(1.0))
+{
     this->_vertSource = vertSource;
     this->_fragSource = fragSource;
     this->_buildShaderProgram();
@@ -71,7 +73,12 @@ void PixelShaderView::draw() const {
     glUseProgram(this->_program);
     glBindVertexArray(this->_VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+
     glUniform2f(this->_u_resolution, this->_resolution.x, this->_resolution.y);
+    glUniformMatrix4fv(this->_u_mvp, 1, GL_FALSE, glm::value_ptr(this->_mvp));
+    glUniform1f(this->_u_time, this->_time);
+    glUniform2f(this->_u_mouse, this->_mouse.x, this->_mouse.y);
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
@@ -85,6 +92,9 @@ GLint PixelShaderView::_buildShaderProgram() {
     glDeleteShader(fragShader);
 
     this->_u_resolution = glGetUniformLocation(program, "u_resolution");
+    this->_u_mvp = glGetUniformLocation(program, "u_mvp");
+    this->_u_time = glGetUniformLocation(program, "u_time");
+    this->_u_mouse = glGetUniformLocation(program, "u_mouse");
 
     return program;
 }

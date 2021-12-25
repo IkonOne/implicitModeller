@@ -47,8 +47,15 @@ int main(int argc, char* argv[]) {
         {
             int w, h;
             glfwGetFramebufferSize(window, &w, &h);
-
             psView.resolution({w, h});
+
+            auto elapsed = glfwGetTime();
+            psView.time(elapsed);
+
+            glm::dvec2 mousePos;
+            glfwGetCursorPos(window, &mousePos.x, &mousePos.y);
+            psView.mouse(mousePos);
+
             psView.draw();
         }
         imk::gl::endRendering(window);

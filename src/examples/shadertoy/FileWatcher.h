@@ -5,7 +5,7 @@
 
 class FileWatcher {
 public:
-    FileWatcher() = default;
+    FileWatcher() : _isWatching(false) {}
     ~FileWatcher() = default;
     FileWatcher(const FileWatcher&) = delete;
 
