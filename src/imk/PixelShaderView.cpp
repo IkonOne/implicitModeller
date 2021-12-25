@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+namespace imk {
+
 static const char* vertSource = "#version 330 core\n"
     "layout (location = 0) in vec3 a_position;\n"
     "void main()\n"
@@ -42,7 +44,7 @@ PixelShaderView::PixelShaderView()
 {
     this->_vertSource = vertSource;
     this->_fragSource = fragSource;
-    this->_buildShaderProgram();
+    this->_program = this->_buildShaderProgram();
 
     glGenVertexArrays(1, &this->_VAO);
     glGenBuffers(1, &this->_VBO);
@@ -106,3 +108,5 @@ void PixelShaderView::hotReload(const char* fragSource) {
     glDeleteProgram(this->_program);
     this->_program = program;
 }
+
+} // imk

@@ -1,4 +1,3 @@
-#include "FileWatcher.h"
 #include "PixelShaderView.h"
 
 #include <imk.h>
@@ -18,9 +17,9 @@ std::string loadTextFile(const char* filename) {
 
 int main(int argc, char* argv[]) {
     auto window = imk::gl::createWindow(800, 600, "Shadertoy");
-    PixelShaderView psView;
+    imk::PixelShaderView psView;
 
-    FileWatcher fileShader;
+    imk::FileWatcher fileShader;
     if (argc > 1) {
         fileShader.start(argv[1]);
         auto fragShaderSource = loadTextFile(fileShader.path().c_str());

@@ -5,6 +5,9 @@ add_library(imk STATIC)
 
 target_sources(imk PRIVATE
     gl.cpp
+    PixelShaderView.cpp
+
+    utils/FileWatcher.cpp
 )
 
 target_link_libraries(imk

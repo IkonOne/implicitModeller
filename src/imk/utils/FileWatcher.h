@@ -3,6 +3,12 @@
 #include <filesystem>
 #include <string>
 
+namespace imk {
+
+/**
+ * @brief Watches a file path for modifications.
+ *          Watches using the c++17 filesystem for a change in the lastWriteTime of the path.
+ */
 class FileWatcher {
 public:
     FileWatcher() : _isWatching(false) {}
@@ -25,3 +31,5 @@ private:
     std::string _path;
     std::filesystem::file_time_type _lastWriteTime;
 };
+
+} // imk

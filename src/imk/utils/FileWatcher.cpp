@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <string>
 
+namespace imk {
+
 void FileWatcher::start(const std::string& path) {
     _isWatching = true;
 
@@ -34,3 +36,5 @@ bool FileWatcher::checkModified() {
     }
     return false;
 }
+
+} // imk

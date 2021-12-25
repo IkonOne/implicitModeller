@@ -8,6 +8,17 @@
 
 #include <string>
 
+namespace imk {
+
+/**
+ * @brief ShaderToy like shader manager.
+ *          Hot reloadable shaders with direct support for several shadertoy-like uniforms.
+ * 
+ *          - u_resolution
+ *          - u_mouse
+ *          - u_mvp
+ *          - u_time 
+ */
 class PixelShaderView {
 public:
     PixelShaderView();
@@ -58,3 +69,5 @@ private:
     GLint _u_mouse;
     glm::vec2 _mouse;
 };
+
+}
