@@ -1,0 +1,175 @@
+#include <iostream>
+
+#include <imk.h>
+
+#include <GLFW/glfw3.h>
+
+#include <string>
+
+const char* fragHeader = R"glsl(
+#version 330 core
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec2 u_mouse;
+uniform mat4 u_mvp;
+)glsl";
+
+const char* fragSDFFunctions = R"glsl(
+float sdfUnion(float d1, float d2) {
+    return min(d1, d2);
+}
+
+float sdfDifference(float d1, float d2) {
+    return max(d1, -d2);
+}
+
+float sdfIntersection(float d1, float d2) {
+    return max(d1, d2);
+}
+
+float sdfSphere(vec3 point, vec3 position, float radius) {
+    return distance(point, position)-radius;
+}
+
+float sdfPlane(vec3 point, vec3 position, vec3 normal) {
+    normal = normalize(normal);
+    return dot(point - position, normal);
+}
+
+float sdfGyroid(vec3 point) {
+    // FIXME: halving the distance is a hack.
+    // There should be an exact solution
+    return abs(sin(point.x)*cos(point.y)
+            + sin(point.y)*cos(point.z)
+            + sin(point.z)*cos(point.x)) * 0.6;
+}
+)glsl";
+
+const char* calculusFunctions = R"glsl(
+// https://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
+// Tetrahedron technique.
+vec3 calcNormal(in vec3 p) {
+    const float h = 0.00001;
+    const vec2 k = vec2(1, -1);
+    return normalize( k.xyy*getDist( p + k.xyy*h ) + 
+                      k.yyx*getDist( p + k.yyx*h ) + 
+                      k.yxy*getDist( p + k.yxy*h ) + 
+                      k.xxx*getDist( p + k.xxx*h ) );
+}
+)glsl";
+
+const char* raymarchDefines = R"glsl(
+#define MAX_STEPS 100
+#define MAX_DISTANCE 100.0
+#define SURF_DISTANCE 0.001
+)glsl";
+
+const char* raymarchFunction = R"glsl(
+float rayMarch(in vec3 r_origin, in vec3 r_direction) {
+    float d_origin = 0.0;
+    for (int i = 0; i < MAX_STEPS; ++i) {
+        vec3 p = r_origin + r_direction * d_origin;
+        float d_step = getDist(p);
+        if (d_step < SURF_DISTANCE) {
+            break;
+        }
+
+        d_origin += d_step;
+
+        if (d_origin >= MAX_DISTANCE) {
+            d_origin = MAX_DISTANCE;
+            break;
+        }
+    }
+
+    return d_origin;
+}
+)glsl";
+
+const char* fragMainFunction = R"glsl(
+void main() {
+    vec2 uv = (gl_FragCoord.xy-0.5*u_resolution) / u_resolution.y;
+    vec3 color = vec3(0);
+
+    vec3 r_origin = vec3(0.0, 1.0, 0.0);
+    vec3 r_direction = normalize(vec3(uv.x, uv.y, 1.0));
+
+    vec2 mouse = (u_mouse-0.5*u_resolution) / u_resolution.y;
+    vec3 rotZ = vec3(-sin(mouse.x), 0.0, cos(mouse.x));
+    vec3 rotX = vec3(0.0, sin(mouse.y)*1.3, cos(mouse.y)*1.3);
+    // TODO : I never rotate the direction...
+    r_origin -= 1.5 * (rotZ + rotX);
+
+    float d = rayMarch(r_origin, r_direction);
+    vec3 p = r_origin + r_direction * d;
+    vec3 n = calcNormal(p);
+    n = n*0.5 + 0.5;
+    color = n;
+
+    gl_FragColor = vec4(color, 1.0);
+}
+)glsl";
+
+std::string genShaderSource(const std::string& getDistFunction) {
+    std::string src;
+    src += fragHeader;
+    src += raymarchDefines;
+    src += fragSDFFunctions;
+    src += getDistFunction;
+    src += calculusFunctions;
+    src += raymarchFunction;
+    src += fragMainFunction;
+
+    return src;
+}
+
+int main(void) {
+    auto window = imk::gl::createWindow(800, 600, "CSG Example");
+    auto psView = imk::PixelShaderView();
+
+    auto fragSource = genShaderSource(R"glsl(
+        float getDist(in vec3 p) {
+            float s1 = sdfSphere(p, vec3(-0.5,-2.5,6), 1);
+            float s2 = sdfSphere(p, vec3(0.5,-2.5,6), 1);
+            float i = sdfIntersection(s2, s1);
+
+            float s3 = sdfSphere(p, vec3(-0.5,0,6), 1);
+            float s4 = sdfSphere(p, vec3(0.5,0,6), 1);
+            float d = sdfDifference(s3, s4);
+
+            float s5 = sdfSphere(p, vec3(-0.5,2.5,6), 1);
+            float s6 = sdfSphere(p, vec3(0.5,2.5,6), 1);
+            float u = sdfUnion(s5, s6);
+
+            float g1 = sdfGyroid(p);
+            float p1 = sdfPlane(p, vec3(0,0,30), vec3(0,0,-1));
+            float g = sdfIntersection(g1,p1);
+
+            return sdfUnion(sdfUnion(sdfUnion(i, d), u), g);
+        }
+    )glsl");
+
+    psView.hotReload(fragSource.c_str());
+
+    while (!imk::gl::windowShouldClose(window)) {
+        imk::gl::beginRendering(window);
+        {
+            int w, h;
+            glfwGetFramebufferSize(window, &w, &h);
+            psView.resolution({w, h});
+
+            double mx, my;
+            glfwGetCursorPos(window, &mx, &my);
+            psView.mouse({mx, my});
+
+            double time = glfwGetTime();
+            psView.time(time);
+
+            psView.draw();
+        }
+        imk::gl::endRendering(window);
+    }
+
+    imk::gl::destroyWindow(window);
+}
