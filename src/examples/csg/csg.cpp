@@ -3,7 +3,9 @@
 #include <imk.h>
 
 #include <GLFW/glfw3.h>
+#include <fmt/core.h>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,6 +26,7 @@ struct CSGNode
         // Primitives
         Sphere,
         Plane,
+        Gyroid,
 
         // Modifiers
         // RotateEuler,
@@ -46,7 +49,7 @@ struct CSGNode
             PostOrder   = 2
         };
 
-        VisitorIterator(pointer ptr, pointer root, VisitorState state = PreOrder)
+        VisitorIterator(pointer ptr, const pointer root, VisitorState state = PreOrder)
             : _ptr(ptr), _root(root), _state(state) {}
         
         const VisitorState state() const { return this->_state; }
@@ -108,7 +111,7 @@ struct CSGNode
     private:
         VisitorState _state;
         pointer _ptr;
-        pointer _root;
+        const pointer _root;
     };
 
     using iterator = VisitorIterator;
@@ -134,8 +137,8 @@ public:
 
     const Type type;
 
-    iterator begin() { return iterator(this, this); }
-    iterator end() { return iterator(nullptr, this); }
+    iterator begin() const { return iterator(const_cast<CSGNode*>(this), const_cast<CSGNode*>(this)); }
+    iterator end() const { return iterator(nullptr, const_cast<CSGNode*>(this)); }
 
     const CSGNodeData& data() const { return *this->_data; }
 
@@ -166,14 +169,20 @@ private:
 };
 
 struct CSGSphere : public CSGNodeData {
-    CSGSphere(double radius) : radius(radius) {}
+    CSGSphere(const glm::vec3& position, double radius)
+        : position(position), radius(radius) {}
+    const glm::vec3 position;
     double radius;
 };
 
 struct CSGPlane : public CSGNodeData {
-    CSGPlane(const glm::vec3& normal) : normal(normal) {}
+    CSGPlane(const glm::vec3& position, const glm::vec3& normal)
+        : position(position), normal(normal) {}
+    glm::vec3 position;
     glm::vec3 normal;
 };
+
+struct CSGGyroid : public CSGNodeData {};
 
 struct CSGFactory {
 
@@ -211,14 +220,79 @@ struct CSGFactory {
         return CSGNode::create(type, data);
     }
 
-    const std::shared_ptr<CSGNode> Plane(const glm::vec3& normal) {
-        return Primitive(CSGNode::Type::Plane, new CSGPlane(normal));
+    const std::shared_ptr<CSGNode> Plane(const glm::vec3& position, const glm::vec3& normal) {
+        return Primitive(CSGNode::Type::Plane, new CSGPlane(position, normal));
     }
 
-    const std::shared_ptr<CSGNode> Sphere(double radius) {
-        return Primitive(CSGNode::Type::Sphere, new CSGSphere(radius));
+    const std::shared_ptr<CSGNode> Sphere(const glm::vec3& position, double radius) {
+        return Primitive(CSGNode::Type::Sphere, new CSGSphere(position, radius));
+    }
+
+    const std::shared_ptr<CSGNode> Gyroid() {
+        return Primitive(CSGNode::Type::Gyroid, new CSGGyroid());
     }
 };
+
+const std::string compileGLSLDistanceFn(const CSGNode& root) {
+    std::map<CSGNode::Type, std::vector<std::string>> lut = {
+        { CSGNode::Type::Union,         { "sdfUnion(",          ", ",   ")" } },
+        { CSGNode::Type::Difference,    { "sdfDifference(",     ", ",   ")" } },
+        { CSGNode::Type::Intersection,  { "sdfIntersection(",   ", ",   ")" } },
+
+        { CSGNode::Type::Sphere,        { "sdfSphere(point, vec3({px:.4f},{py:.4f},{pz:.4f}), {radius:.4f})" } },
+        { CSGNode::Type::Plane,         { "sdfPlane(point, vec3({px:.4f},{py:.4f},{pz:.4f}), vec3({nx:.4f},{ny:.4f},{nz:.4f}))"} },
+        { CSGNode::Type::Gyroid,        { "sdfGyroid(point)" } },
+    };
+
+    std::string result = "float getDist(in vec3 point) {\n\treturn ";
+    for (auto it = root.begin(); it != root.end(); ++it) {
+        switch (it->type) {
+            case CSGNode::Type::Union:
+            case CSGNode::Type::Difference:
+            case CSGNode::Type::Intersection:
+                result += lut[it->type][it.state()];
+                break;
+            
+            case CSGNode::Type::Complement:
+                break;
+            
+            case CSGNode::Type::Sphere:
+                if (it.state() == CSGNode::VisitorIterator::VisitorState::PreOrder) {
+                    auto sphere = reinterpret_cast<const CSGSphere&>(it->data());
+                    result += fmt::format(lut[it->type][0],
+                        fmt::arg("px", sphere.position.x),
+                        fmt::arg("py", sphere.position.y),
+                        fmt::arg("pz", sphere.position.z),
+                        fmt::arg("radius", sphere.radius)
+                    );
+                }
+                break;
+            
+            case CSGNode::Type::Plane:
+                if (it.state() == CSGNode::VisitorIterator::VisitorState::PreOrder) {
+                    auto plane = reinterpret_cast<const CSGPlane&>(it->data());
+                    result += fmt::format(lut[it->type][0],
+                        fmt::arg("px", plane.position.x),
+                        fmt::arg("py", plane.position.y),
+                        fmt::arg("pz", plane.position.z),
+                        fmt::arg("nx", plane.normal.x),
+                        fmt::arg("ny", plane.normal.y),
+                        fmt::arg("nz", plane.normal.z)
+                    );
+                }
+                break;
+            
+            case CSGNode::Type::Gyroid:
+                if (it.state() == CSGNode::VisitorIterator::VisitorState::PreOrder) {
+                    result += lut[it->type][0];
+                }
+                break;
+        }
+    }
+    result += ";\n}";
+
+    return result;
+}
 
 const char* fragHeader = R"glsl(
 #version 330 core
@@ -256,7 +330,7 @@ float sdfGyroid(vec3 point) {
     // There should be an exact solution
     return abs(sin(point.x)*cos(point.y)
             + sin(point.y)*cos(point.z)
-            + sin(point.z)*cos(point.x)) * 0.6;
+            + sin(point.z)*cos(point.x)) * 0.5;
 }
 )glsl";
 
@@ -276,7 +350,7 @@ vec3 calcNormal(in vec3 p) {
 const char* raymarchDefines = R"glsl(
 #define MAX_STEPS 100
 #define MAX_DISTANCE 100.0
-#define SURF_DISTANCE 0.001
+#define SURF_DISTANCE 0.0001
 )glsl";
 
 const char* raymarchFunction = R"glsl(
@@ -339,43 +413,37 @@ std::string genShaderSource(const std::string& getDistFunction) {
 }
 
 int main(void) {
-    CSGFactory csg;
-    auto tree = csg.Union(
-        csg.Sphere(2.0),
-        csg.Sphere(2.0)
-    );
-
-
-    int i = 0;
-    for (auto it = tree->begin(); it != tree->end(); ++it) {
-        std::cout << it.state() << ", " << i++ << '\n';
-    }
-
     auto window = imk::gl::createWindow(800, 600, "CSG Example");
     auto psView = imk::PixelShaderView();
 
-    auto fragSource = genShaderSource(R"glsl(
-        float getDist(in vec3 p) {
-            float s1 = sdfSphere(p, vec3(-0.5,-2.5,6), 1);
-            float s2 = sdfSphere(p, vec3(0.5,-2.5,6), 1);
-            float i = sdfIntersection(s2, s1);
+    CSGFactory csg;
+    auto tree = csg.Union(
+        csg.Union(
+            csg.Intersection(
+                csg.Sphere({-0.5, -2.5, 6}, 1.0),
+                csg.Sphere({0.5, -2.5, 6}, 1.0)
+            ),
+            csg.Difference(
+                csg.Sphere({-0.5, 0, 6}, 1.0),
+                csg.Sphere({0.5, 0, 6}, 1.0)
+            )
+        ),
+        csg.Union(
+            csg.Union(
+                csg.Sphere({-0.5, 2.5, 6}, 1.0),
+                csg.Sphere({0.5, 2.5, 6}, 1.0)
+            ),
+            csg.Intersection(
+                csg.Gyroid(),
+                csg.Plane({0, 0, 30}, {0, 0, -1})
+            )
+        )
+    );
 
-            float s3 = sdfSphere(p, vec3(-0.5,0,6), 1);
-            float s4 = sdfSphere(p, vec3(0.5,0,6), 1);
-            float d = sdfDifference(s3, s4);
+    auto fn = compileGLSLDistanceFn(*tree);
+    std::cout << fn << '\n';
 
-            float s5 = sdfSphere(p, vec3(-0.5,2.5,6), 1);
-            float s6 = sdfSphere(p, vec3(0.5,2.5,6), 1);
-            float u = sdfUnion(s5, s6);
-
-            float g1 = sdfGyroid(p);
-            float p1 = sdfPlane(p, vec3(0,0,30), vec3(0,0,-1));
-            float g = sdfIntersection(g1,p1);
-
-            return sdfUnion(sdfUnion(sdfUnion(i, d), u), g);
-        }
-    )glsl");
-
+    auto fragSource = genShaderSource(fn);
     psView.hotReload(fragSource.c_str());
 
     while (!imk::gl::windowShouldClose(window)) {

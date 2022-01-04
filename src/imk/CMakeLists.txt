@@ -11,6 +11,7 @@ target_sources(imk PRIVATE
 )
 
 target_link_libraries(imk
+    fmt
     glad
     glfw
     glm
