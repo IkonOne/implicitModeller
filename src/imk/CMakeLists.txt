@@ -7,6 +7,11 @@ target_sources(imk PRIVATE
     gl.cpp
     PixelShaderView.cpp
 
+    code_gen/genGLSL.cpp
+
+    csg/csg_factory.cpp
+    csg/csg_node.cpp
+
     utils/FileWatcher.cpp
 )
 
