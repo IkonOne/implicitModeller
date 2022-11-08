@@ -15,7 +15,7 @@ void FileWatcher::start(const std::string& path) {
     }
 
     this->_path = path;
-    this->_lastWriteTime = std::filesystem::last_write_time(path);
+    _lastWriteTime = std::filesystem::last_write_time(path);
 }
 
 void FileWatcher::stop() {

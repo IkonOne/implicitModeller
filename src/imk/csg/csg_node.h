@@ -46,7 +46,10 @@ struct CSGNode
         };
 
         VisitorIterator(pointer ptr, const pointer root, VisitorState state = PreOrder)
-            : _ptr(ptr), _root(root), _state(state) {}
+            : _ptr(ptr),
+            _state(state),
+            _root(root)
+        {}
         
         const VisitorState state() const;
 
@@ -59,8 +62,8 @@ struct CSGNode
         friend bool operator!=(const VisitorIterator& lhs, const VisitorIterator& rhs) { return lhs._ptr != rhs._ptr; }
 
     private:
-        VisitorState _state;
         pointer _ptr;
+        VisitorState _state;
         const pointer _root;
     };
     
@@ -72,7 +75,11 @@ struct CSGNode
 
 private:
     CSGNode(const Type type, CSGNodeData* data)
-        : type(type), _data(std::unique_ptr<CSGNodeData>(data)), _lhs(nullptr), _rhs(nullptr), _parent(nullptr)
+        : type(type),
+        _data(std::unique_ptr<CSGNodeData>(data)),
+        _parent(nullptr),
+        _lhs(nullptr),
+        _rhs(nullptr)
     { }
     
 public:
