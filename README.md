@@ -2,6 +2,19 @@
 
 Implementation of a basic implicit function modelling kernel.
 
+## Building
+
+### Linux (Debian flavors)
+
+```bash
+sudo apt update
+sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+mkdir build
+cd build
+cmake ..
+make
+```
+
 ## Development Container
 
 This should work for any of the major desktop platforms, but is not particularly performant.
