@@ -1,9 +1,7 @@
 #include <iostream>
 
 #include <imk.h>
-
-#include <GLFW/glfw3.h>
-#include <fmt/core.h>
+#include <imk_viz.h>
 
 #include <map>
 #include <memory>

@@ -2,7 +2,7 @@
 #include <vector>
 
 #include <imk.h>
-#include <GLFW/glfw3.h>
+#include <imk_viz.h>
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>

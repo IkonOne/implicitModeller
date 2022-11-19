@@ -1,5 +1,6 @@
 #include "genGLSL.h"
-#include "../csg/csg_nodes.h"
+
+#include <imk.h>
 
 #include <fmt/core.h>
 

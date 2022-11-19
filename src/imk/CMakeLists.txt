@@ -9,11 +9,6 @@ add_compile_options(-march=x86-64 -O3)
 add_library(imk STATIC)
 
 target_sources(imk PRIVATE
-    gl.cpp
-    PixelShaderView.cpp
-
-    code_gen/genGLSL.cpp
-
     csg/csg_factory.cpp
     csg/csg_node.cpp
 
@@ -21,9 +16,6 @@ target_sources(imk PRIVATE
 )
 
 target_link_libraries(imk
-    fmt
-    glad
-    glfw
     glm
     stdc++fs # FIXME: linux only???
 )
