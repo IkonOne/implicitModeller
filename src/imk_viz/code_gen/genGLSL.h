@@ -5,11 +5,9 @@
 
 #include <string>
 
-namespace imk {
-namespace code_gen {
+namespace imk_viz {
 
 std::string genShaderSource(const std::string& getDistFunction);
-const std::string genGLSLDistanceFn(const csg::CSGNode& root);
+const std::string genGLSLDistanceFn(const imk::csg::CSGNode& root);
 
-} // namespace code_gen
 } // namespace imk

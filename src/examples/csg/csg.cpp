@@ -9,8 +9,8 @@
 #include <vector>
 
 int main(void) {
-    auto window = imk::gl::createWindow(800, 600, "CSG Example");
-    auto psView = imk::PixelShaderView();
+    auto window = imk_viz::createWindow(800, 600, "CSG Example");
+    auto psView = imk_viz::PixelShaderView();
 
     imk::csg::CSGFactory csg;
     auto tree = csg.Union(
@@ -45,14 +45,14 @@ int main(void) {
         )
     );
 
-    auto fn = imk::code_gen::genGLSLDistanceFn(*tree);
+    auto fn = imk_viz::genGLSLDistanceFn(*tree);
     std::cout << fn << '\n';
 
-    auto fragSource = imk::code_gen::genShaderSource(fn);
+    auto fragSource = imk_viz::genShaderSource(fn);
     psView.hotReload(fragSource.c_str());
 
-    while (!imk::gl::windowShouldClose(window)) {
-        imk::gl::beginRendering(window);
+    while (!imk_viz::windowShouldClose(window)) {
+        imk_viz::beginRendering(window);
         {
             int w, h;
             glfwGetFramebufferSize(window, &w, &h);
@@ -67,8 +67,8 @@ int main(void) {
 
             psView.draw();
         }
-        imk::gl::endRendering(window);
+        imk_viz::endRendering(window);
     }
 
-    imk::gl::destroyWindow(window);
+    imk_viz::destroyWindow(window);
 }
