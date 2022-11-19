@@ -1,5 +1,6 @@
 #include "genGLSL.h"
-#include "../csg/csg_nodes.h"
+
+#include <imk.h>
 
 #include <fmt/core.h>
 
@@ -7,8 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace imk {
-namespace code_gen {
+namespace imk_viz {
 
 const char* fragHeader = R"glsl(
 #version 330 core
@@ -128,32 +128,32 @@ std::string genShaderSource(const std::string& getDistFunction) {
     return src;
 }
 
-const std::string genGLSLDistanceFn(const csg::CSGNode& root) {
-    std::map<csg::CSGNode::Type, std::vector<std::string>> lut = {
-        { csg::CSGNode::Type::Union,         { "sdfUnion(",          ", ",   ")" } },
-        { csg::CSGNode::Type::Difference,    { "sdfDifference(",     ", ",   ")" } },
-        { csg::CSGNode::Type::Intersection,  { "sdfIntersection(",   ", ",   ")" } },
+const std::string genGLSLDistanceFn(const imk::csg::CSGNode& root) {
+    std::map<imk::csg::CSGNode::Type, std::vector<std::string>> lut = {
+        { imk::csg::CSGNode::Type::Union,         { "sdfUnion(",          ", ",   ")" } },
+        { imk::csg::CSGNode::Type::Difference,    { "sdfDifference(",     ", ",   ")" } },
+        { imk::csg::CSGNode::Type::Intersection,  { "sdfIntersection(",   ", ",   ")" } },
 
-        { csg::CSGNode::Type::Sphere,        { "sdfSphere(point, vec3({px:.4f},{py:.4f},{pz:.4f}), {radius:.4f})" } },
-        { csg::CSGNode::Type::Plane,         { "sdfPlane(point, vec3({px:.4f},{py:.4f},{pz:.4f}), vec3({nx:.4f},{ny:.4f},{nz:.4f}))"} },
-        { csg::CSGNode::Type::Gyroid,        { "sdfGyroid(point)" } },
+        { imk::csg::CSGNode::Type::Sphere,        { "sdfSphere(point, vec3({px:.4f},{py:.4f},{pz:.4f}), {radius:.4f})" } },
+        { imk::csg::CSGNode::Type::Plane,         { "sdfPlane(point, vec3({px:.4f},{py:.4f},{pz:.4f}), vec3({nx:.4f},{ny:.4f},{nz:.4f}))"} },
+        { imk::csg::CSGNode::Type::Gyroid,        { "sdfGyroid(point)" } },
     };
 
     std::string result = "float getDist(in vec3 point) {\n\treturn ";
     for (auto it = root.begin(); it != root.end(); ++it) {
         switch (it->type) {
-            case csg::CSGNode::Type::Union:
-            case csg::CSGNode::Type::Difference:
-            case csg::CSGNode::Type::Intersection:
+            case imk::csg::CSGNode::Type::Union:
+            case imk::csg::CSGNode::Type::Difference:
+            case imk::csg::CSGNode::Type::Intersection:
                 result += lut[it->type][it.state()];
                 break;
             
-            case csg::CSGNode::Type::Complement:
+            case imk::csg::CSGNode::Type::Complement:
                 break;
             
-            case csg::CSGNode::Type::Sphere:
-                if (it.state() == csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
-                    auto sphere = reinterpret_cast<const csg::CSGSphere&>(it->data());
+            case imk::csg::CSGNode::Type::Sphere:
+                if (it.state() == imk::csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
+                    auto sphere = reinterpret_cast<const imk::csg::CSGSphere&>(it->data());
                     result += fmt::format(lut[it->type][0],
                         fmt::arg("px", sphere.position.x),
                         fmt::arg("py", sphere.position.y),
@@ -163,9 +163,9 @@ const std::string genGLSLDistanceFn(const csg::CSGNode& root) {
                 }
                 break;
             
-            case csg::CSGNode::Type::Plane:
-                if (it.state() == csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
-                    auto plane = reinterpret_cast<const csg::CSGPlane&>(it->data());
+            case imk::csg::CSGNode::Type::Plane:
+                if (it.state() == imk::csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
+                    auto plane = reinterpret_cast<const imk::csg::CSGPlane&>(it->data());
                     result += fmt::format(lut[it->type][0],
                         fmt::arg("px", plane.position.x),
                         fmt::arg("py", plane.position.y),
@@ -177,8 +177,8 @@ const std::string genGLSLDistanceFn(const csg::CSGNode& root) {
                 }
                 break;
             
-            case csg::CSGNode::Type::Gyroid:
-                if (it.state() == csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
+            case imk::csg::CSGNode::Type::Gyroid:
+                if (it.state() == imk::csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
                     result += lut[it->type][0];
                 }
                 break;
@@ -189,5 +189,4 @@ const std::string genGLSLDistanceFn(const csg::CSGNode& root) {
     return result;
 }
 
-} // namespace code_gen
-} // namespace imk
+} // namespace imk_viz

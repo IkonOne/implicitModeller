@@ -8,8 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace imk {
-namespace gl {
+namespace imk_viz {
 
 GLFWwindow* createWindow(int width=800, int height=600, const char* title=nullptr);
 void destroyWindow(GLFWwindow* window);
@@ -22,5 +21,4 @@ const void deleteShader(const GLuint shaderID);
 
 const GLuint createProgram(const std::vector<GLuint>& shaderIDs);
 
-} // gl
-} // imk
+} // imk_viz

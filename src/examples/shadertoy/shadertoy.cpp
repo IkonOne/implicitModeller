@@ -1,6 +1,7 @@
-#include "PixelShaderView.h"
+// #include "PixelShaderView.h"
 
 #include <imk.h>
+#include <imk_viz.h>
 
 #include <chrono>
 #include <iostream>
@@ -16,8 +17,8 @@ std::string loadTextFile(const char* filename) {
 }
 
 int main(int argc, char* argv[]) {
-    auto window = imk::gl::createWindow(800, 600, "Shadertoy");
-    imk::PixelShaderView psView;
+    auto window = imk_viz::createWindow(800, 600, "Shadertoy");
+    imk_viz::PixelShaderView psView;
 
     imk::FileWatcher fileShader;
     if (argc > 1) {
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        imk::gl::beginRendering(window);
+        imk_viz::beginRendering(window);
         {
             int w, h;
             glfwGetFramebufferSize(window, &w, &h);
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]) {
 
             psView.draw();
         }
-        imk::gl::endRendering(window);
+        imk_viz::endRendering(window);
     }
 
     glfwDestroyWindow(window);

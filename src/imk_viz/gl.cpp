@@ -5,8 +5,7 @@
 
 char infoLog[512];
 
-namespace imk {
-namespace gl {
+namespace imk_viz {
 
 GLFWwindow* createWindow(int width, int height, const char* title) {
     auto error_cb = [](int error, const char* description) {
@@ -119,5 +118,4 @@ const GLuint createProgram(const std::vector<GLuint>& shaderIDs) {
     return programID;
 }
 
-}
-} // imk
+} // namespace imk_viz

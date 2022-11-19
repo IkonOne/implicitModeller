@@ -8,7 +8,7 @@
 
 #include <string>
 
-namespace imk {
+namespace imk_viz {
 
 /**
  * @brief ShaderToy like shader manager.
@@ -70,4 +70,4 @@ private:
     glm::vec2 _mouse;
 };
 
-}
+} // namespace ink_viz

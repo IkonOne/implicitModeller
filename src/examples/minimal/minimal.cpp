@@ -2,7 +2,7 @@
 #include <vector>
 
 #include <imk.h>
-#include <GLFW/glfw3.h>
+#include <imk_viz.h>
 
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -24,15 +24,15 @@ static const char* fragmentShaderSource = "#version 330 core\n"
     "}\n";
 
 int main(void) {
-    auto window = imk::gl::createWindow(800, 600, "Minimal Example...");
+    auto window = imk_viz::createWindow(800, 600, "Minimal Example...");
 
-    auto vertexShader = imk::gl::compileShader(GL_VERTEX_SHADER, vertexShaderSource);
-    auto fragmentShader = imk::gl::compileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-    auto shaderProgram = imk::gl::createProgram({
+    auto vertexShader = imk_viz::compileShader(GL_VERTEX_SHADER, vertexShaderSource);
+    auto fragmentShader = imk_viz::compileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
+    auto shaderProgram = imk_viz::createProgram({
         vertexShader, fragmentShader
     });
-    imk::gl::deleteShader(vertexShader);
-    imk::gl::deleteShader(fragmentShader);
+    imk_viz::deleteShader(vertexShader);
+    imk_viz::deleteShader(fragmentShader);
 
     GLint mvp_location, resolution_location;
     mvp_location = glGetUniformLocation(shaderProgram, "u_mvp");
@@ -72,8 +72,8 @@ int main(void) {
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
 
-    while (!imk::gl::windowShouldClose(window)) {
-        imk::gl::beginRendering(window);
+    while (!imk_viz::windowShouldClose(window)) {
+        imk_viz::beginRendering(window);
         {
             float time = glfwGetTime() * 0.1f;
             glm::mat4 m = glm::rotate(glm::mat4(1.0f), time, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -90,10 +90,10 @@ int main(void) {
             glUniform2f(resolution_location, dims.x, dims.y);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         }
-        imk::gl::endRendering(window);
+        imk_viz::endRendering(window);
     }
 
-    imk::gl::destroyWindow(window);
+    imk_viz::destroyWindow(window);
 
     return 0;
 }

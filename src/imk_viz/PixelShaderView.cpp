@@ -1,4 +1,5 @@
 #include "PixelShaderView.h"
+#include "gl.h"
 
 #include <imk.h>
 
@@ -10,7 +11,7 @@
 
 #include <iostream>
 
-namespace imk {
+namespace imk_viz {
 
 static const char* vertSource = "#version 330 core\n"
     "layout (location = 0) in vec3 a_position;\n"
@@ -87,9 +88,9 @@ void PixelShaderView::draw() const {
 GLint PixelShaderView::_buildShaderProgram() {
     GLint program;
 
-    auto vertShader = imk::gl::compileShader(GL_VERTEX_SHADER, this->_vertSource.c_str());
-    auto fragShader = imk::gl::compileShader(GL_FRAGMENT_SHADER, this->_fragSource.c_str());
-    program = imk::gl::createProgram({vertShader, fragShader});
+    auto vertShader = imk_viz::compileShader(GL_VERTEX_SHADER, this->_vertSource.c_str());
+    auto fragShader = imk_viz::compileShader(GL_FRAGMENT_SHADER, this->_fragSource.c_str());
+    program = imk_viz::createProgram({vertShader, fragShader});
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
 
@@ -109,4 +110,4 @@ void PixelShaderView::hotReload(const char* fragSource) {
     this->_program = program;
 }
 
-} // imk
+} // namespace imk_viz
