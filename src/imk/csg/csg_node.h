@@ -71,7 +71,7 @@ struct CSGNode {
     using iterator = VisitorIterator;
 
     ~CSGNode() = default;
-    CSGNode(const CSGNode&) = delete;
+    CSGNode(const CSGNode&);
 
 private:
     CSGNode() = default;
@@ -109,6 +109,11 @@ public:
         return result;
     }
 
+    static CSGNode create_empty() {
+        CSGNode empty(Type::EMPTY, nullptr);
+        return empty;
+    }
+
     const Type type;
 
     iterator begin() const;
@@ -121,10 +126,10 @@ public:
 
     const CSGNode& parent() const;
 
-    const CSGNode& lhs() const;
+    const CSGNode lhs() const;
     void lhs(std::unique_ptr<CSGNode>&& other);
 
-    const CSGNode& rhs() const;
+    const CSGNode rhs() const;
     void rhs(std::unique_ptr<CSGNode>&& other);
 
 private:
