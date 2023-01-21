@@ -32,6 +32,7 @@ public:
 
     void hotReload(const char* vertSource);
 
+    glm::vec2 resolution() const { return this->_resolution; }
     void resolution(const glm::vec2& resolution) {
         this->_resolution = resolution;
     }
@@ -44,6 +45,7 @@ public:
         this->_time = time;
     }
 
+    glm::vec2 mouse() const { return this->_mouse; }
     void mouse(const glm::vec2& mouse) {
         this->_mouse = mouse;
     }

@@ -14,8 +14,8 @@ CSGNode::VisitorIterator::pointer CSGNode::VisitorIterator::operator->() const {
 CSGNode::VisitorIterator& CSGNode::VisitorIterator::operator++() {
     switch(_state) {
         case PreOrder:
-            if (_ptr->lhs().get()) {
-                _ptr = _ptr->lhs().get();
+            if (_ptr->_lhs) {
+                _ptr = _ptr->_lhs.get();
             }
             else {
                 _state = InOrder;
@@ -23,9 +23,9 @@ CSGNode::VisitorIterator& CSGNode::VisitorIterator::operator++() {
             break;
 
         case InOrder:
-            if (_ptr->rhs().get()) {
+            if (_ptr->_rhs) {
                 _state = PreOrder;
-                _ptr = _ptr->rhs().get();
+                _ptr = _ptr->_rhs.get();
             }
             else {
                 _state = PostOrder;
@@ -33,13 +33,13 @@ CSGNode::VisitorIterator& CSGNode::VisitorIterator::operator++() {
             break;
 
         case PostOrder:
-            pointer parent = _ptr->parent().get();
+            pointer parent = _ptr->_parent;
 
             if (parent == nullptr || _ptr == _root) {
                 _ptr = nullptr;
             }
             else { // parent exists
-                if (parent->lhs().get() == _ptr) {
+                if (parent->_lhs.get() == _ptr) {
                     _state = InOrder;
                 }
                 else {
@@ -63,18 +63,18 @@ CSGNode::iterator CSGNode::begin() const { return iterator(const_cast<CSGNode*>(
 CSGNode::iterator CSGNode::end() const { return iterator(nullptr, const_cast<CSGNode*>(this)); }
 
 const CSGNodeData& CSGNode::data() const { return *this->_data; }
-std::shared_ptr<CSGNode> CSGNode::parent() const { return this->_parent; }
+const CSGNode& CSGNode::parent() const { return *(this->_parent); }
 
-std::shared_ptr<CSGNode> CSGNode::lhs() const { return this->_lhs; }
-void CSGNode::lhs(const std::shared_ptr<CSGNode>& other) {
-    other->_parent = this->shared_from_this();
-    this->_lhs = other;
+const CSGNode& CSGNode::lhs() const { return *(this->_lhs); }
+void CSGNode::lhs(std::unique_ptr<CSGNode>&& other) {
+    other->_parent = this;
+    this->_lhs = std::move(other);
 }
 
-std::shared_ptr<CSGNode> CSGNode::rhs() const { return this->_rhs; }
-void CSGNode::rhs(const std::shared_ptr<CSGNode>& other) {
-    other->_parent = this->shared_from_this();
-    this->_rhs = other;
+const CSGNode& CSGNode::rhs() const { return *(this->_rhs); }
+void CSGNode::rhs(std::unique_ptr<CSGNode>&& other) {
+    other->_parent = this;
+    this->_rhs = std::move(other);
 }
 
 } // namespace csg

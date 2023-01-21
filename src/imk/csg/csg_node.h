@@ -1,15 +1,14 @@
 #pragma once
 
-#include <memory> // shared_ptr, enable_shared_from_this
+#include <memory> // unique_ptr
+#include <utility> // move
 
 namespace imk {
 namespace csg {
 
 struct CSGNodeData {};
 
-struct CSGNode
-    : public std::enable_shared_from_this<CSGNode>
-{
+struct CSGNode {
     enum Type {
         // Binary Ops
         Union = 0,
@@ -29,6 +28,8 @@ struct CSGNode
         // RotateQuaternion,
         // Translate,
         // Scale,
+
+        EMPTY,
     };
 
     struct VisitorIterator {
@@ -69,28 +70,42 @@ struct CSGNode
     
     using iterator = VisitorIterator;
 
-    CSGNode() = delete;
     ~CSGNode() = default;
     CSGNode(const CSGNode&) = delete;
 
 private:
+    CSGNode() = default;
     CSGNode(const Type type, CSGNodeData* data)
         : type(type),
-        _data(std::unique_ptr<CSGNodeData>(data)),
+        _data(data),
         _parent(nullptr),
         _lhs(nullptr),
         _rhs(nullptr)
     { }
     
 public:
-    [[nodiscard]] static std::shared_ptr<CSGNode> create(
-        const Type type, CSGNodeData* data,
-        const std::shared_ptr<CSGNode>& lhs = nullptr,
-        const std::shared_ptr<CSGNode>& rhs = nullptr
+    [[nodiscard]] static std::unique_ptr<CSGNode> create(const Type type, CSGNodeData* data) {
+        return std::unique_ptr<CSGNode>(new CSGNode(type, data));
+    }
+
+    [[nodiscard]] static std::unique_ptr<CSGNode> create(
+        const Type type,
+        CSGNodeData* data,
+        std::unique_ptr<CSGNode>&& lhs
     ) {
-        auto result = std::shared_ptr<CSGNode>(new CSGNode(type, data));
-        if (lhs) result->lhs(lhs);
-        if (rhs) result->rhs(rhs);
+        auto result = create(type, data);
+        result->lhs(std::move(lhs));
+        return result;
+    }
+    
+    [[nodiscard]] static std::unique_ptr<CSGNode> create(
+        const Type type,
+        CSGNodeData* data,
+        std::unique_ptr<CSGNode>&& lhs,
+        std::unique_ptr<CSGNode>&& rhs 
+    ) {
+        auto result = create(type, data, std::move(lhs));
+        result->rhs(std::move(rhs));
         return result;
     }
 
@@ -104,20 +119,20 @@ public:
     template <class T>
     const T& data() const { return dynamic_cast<T&>(data()); }
 
-    std::shared_ptr<CSGNode> parent() const;
+    const CSGNode& parent() const;
 
-    std::shared_ptr<CSGNode> lhs() const;
-    void lhs(const std::shared_ptr<CSGNode>& other);
+    const CSGNode& lhs() const;
+    void lhs(std::unique_ptr<CSGNode>&& other);
 
-    std::shared_ptr<CSGNode> rhs() const;
-    void rhs(const std::shared_ptr<CSGNode>& other);
+    const CSGNode& rhs() const;
+    void rhs(std::unique_ptr<CSGNode>&& other);
 
 private:
     // FIXME: Use get/set to manage parents and the like.
-    std::unique_ptr<CSGNodeData> _data;
-    std::shared_ptr<CSGNode> _parent;
-    std::shared_ptr<CSGNode> _lhs;
-    std::shared_ptr<CSGNode> _rhs;
+    CSGNodeData* _data;
+    CSGNode* _parent;
+    std::unique_ptr<CSGNode> _lhs;
+    std::unique_ptr<CSGNode> _rhs;
 
 };
 
