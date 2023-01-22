@@ -6,6 +6,8 @@ add_executable(
     imk_test_main.cpp
 
     imk/csg/csg_node_test.cpp
+
+    imk/render/brep/marching_cubes_test.cpp
 )
 
 target_link_libraries(
