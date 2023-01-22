@@ -19,12 +19,20 @@ target_sources(imk PRIVATE
     csg/csg_factory.cpp
     csg/csg_node.cpp
 
+    render/marching_cubes.cpp
+
     utils/FileWatcher.cpp
 )
 
 target_link_libraries(imk
-    glm
+    glm::glm
     stdc++fs # FIXME: linux only???
 )
 
-target_include_directories(imk PUBLIC ../imk)
+target_include_directories(imk
+    PUBLIC
+    .
+    csg
+    render
+    utils
+)
