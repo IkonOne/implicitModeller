@@ -119,7 +119,7 @@ public:
     iterator begin() const;
     iterator end() const;
 
-    const CSGNodeData& data() const;
+    const CSGNodeData* data() const;
 
     template <class T>
     const T& data() const { return dynamic_cast<T&>(data()); }

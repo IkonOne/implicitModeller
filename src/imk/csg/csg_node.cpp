@@ -76,7 +76,7 @@ CSGNode::CSGNode(const CSGNode& other)
 CSGNode::iterator CSGNode::begin() const { return iterator(const_cast<CSGNode*>(this), const_cast<CSGNode*>(this)); }
 CSGNode::iterator CSGNode::end() const { return iterator(nullptr, const_cast<CSGNode*>(this)); }
 
-const CSGNodeData& CSGNode::data() const { return *this->_data; }
+const CSGNodeData* CSGNode::data() const { return this->_data; }
 const CSGNode& CSGNode::parent() const { return *(this->_parent); }
 
 const CSGNode CSGNode::lhs() const {

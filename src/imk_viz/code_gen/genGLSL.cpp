@@ -153,26 +153,26 @@ const std::string genGLSLDistanceFn(const imk::csg::CSGNode& root) {
             
             case imk::csg::CSGNode::Type::Sphere:
                 if (it.state() == imk::csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
-                    auto sphere = reinterpret_cast<const imk::csg::CSGSphere&>(it->data());
+                    auto sphere = reinterpret_cast<const imk::csg::CSGSphere*>(it->data());
                     result += fmt::format(lut[it->type][0],
-                        fmt::arg("px", sphere.position.x),
-                        fmt::arg("py", sphere.position.y),
-                        fmt::arg("pz", sphere.position.z),
-                        fmt::arg("radius", sphere.radius)
+                        fmt::arg("px", sphere->position.x),
+                        fmt::arg("py", sphere->position.y),
+                        fmt::arg("pz", sphere->position.z),
+                        fmt::arg("radius", sphere->radius)
                     );
                 }
                 break;
             
             case imk::csg::CSGNode::Type::Plane:
                 if (it.state() == imk::csg::CSGNode::VisitorIterator::VisitorState::PreOrder) {
-                    auto plane = reinterpret_cast<const imk::csg::CSGPlane&>(it->data());
+                    auto plane = reinterpret_cast<const imk::csg::CSGPlane*>(it->data());
                     result += fmt::format(lut[it->type][0],
-                        fmt::arg("px", plane.position.x),
-                        fmt::arg("py", plane.position.y),
-                        fmt::arg("pz", plane.position.z),
-                        fmt::arg("nx", plane.normal.x),
-                        fmt::arg("ny", plane.normal.y),
-                        fmt::arg("nz", plane.normal.z)
+                        fmt::arg("px", plane->position.x),
+                        fmt::arg("py", plane->position.y),
+                        fmt::arg("pz", plane->position.z),
+                        fmt::arg("nx", plane->normal.x),
+                        fmt::arg("ny", plane->normal.y),
+                        fmt::arg("nz", plane->normal.z)
                     );
                 }
                 break;
